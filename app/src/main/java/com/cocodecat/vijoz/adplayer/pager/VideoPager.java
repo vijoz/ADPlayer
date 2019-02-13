@@ -30,10 +30,11 @@ public class VideoPager extends BasePager implements AdapterView.OnItemClickList
     private TextView mTvNoVideo;
     private ProgressBar mPbLoading;
 
+    private List<MediaItem> mAllItems;
     private List<MediaItem> mMediaItems;
+    private List<MediaItem> mPicItems;
 
     private VideoAdapter mVideoAdapter;
-
     private List list = new ArrayList();
 
     private Handler mHandler = new Handler() {
@@ -42,15 +43,16 @@ public class VideoPager extends BasePager implements AdapterView.OnItemClickList
             super.handleMessage(msg);
             switch (msg.what) {
                 case DATA_LOADING_FINISH:
-                    if (!mMediaItems.isEmpty() && mMediaItems.size() > 0) {
+                    if (!mAllItems.isEmpty() && mAllItems.size() > 0) {
                         mTvNoVideo.setVisibility(View.GONE);
-                        mVideoAdapter.refreshData(mMediaItems);
+                        mVideoAdapter.refreshData(mAllItems);
                     } else {
                         mTvNoVideo.setVisibility(View.VISIBLE);
                     }
                     mPbLoading.setVisibility(View.GONE);
-//                    //从第0个开始播放视频
-//                    SystemVideoPlayerActivity.startSystemVideoPlayerActivity(mContext, (ArrayList<MediaItem>) mMediaItems, null,0);
+
+//                  //从第0个开始播放视频
+                    //SystemVideoPlayerActivity.startSystemVideoPlayerActivity(mContext, (ArrayList<MediaItem>) mAllItems, null,0);
 
                     SystemVideoPlayerActivity.setImageListDatas(list);
                     break;
@@ -75,8 +77,10 @@ public class VideoPager extends BasePager implements AdapterView.OnItemClickList
     @Override
     public void initData() {
         super.initData();
+        mAllItems = new ArrayList<>();
         mMediaItems = new ArrayList<>();
-        mVideoAdapter = new VideoAdapter(mContext, mMediaItems);
+        mPicItems = new ArrayList<>();
+        mVideoAdapter = new VideoAdapter(mContext, mAllItems);
         mLvVideo.setAdapter(mVideoAdapter);
         mLvVideo.setOnItemClickListener(this);
         getDataFromLocal();
@@ -84,9 +88,8 @@ public class VideoPager extends BasePager implements AdapterView.OnItemClickList
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        SystemVideoPlayerActivity.startSystemVideoPlayerActivity(mContext, (ArrayList<MediaItem>) mMediaItems, null, position);
+        SystemVideoPlayerActivity.startSystemVideoPlayerActivity(mContext, (ArrayList<MediaItem>) mAllItems,(ArrayList<MediaItem>) mMediaItems,(ArrayList<MediaItem>) mPicItems, null, position);
     }
-
 
     public void getDataFromLocal() {
         mPbLoading.setVisibility(View.VISIBLE);
@@ -96,10 +99,11 @@ public class VideoPager extends BasePager implements AdapterView.OnItemClickList
                 super.run();
                 //读取A文件夹中的数据
                 String APath = FileUtils.AFilesPath(mContext);
-                String BPath = FileUtils.BFilesPath(mContext);
+//                String BPath = FileUtils.BFilesPath(mContext);
 
                 File path = new File(APath);
                 File[] files = path.listFiles();// 读取文件夹下文件
+
                 for (File file : files) {
                     if (!file.isDirectory()) {
                         //把文件名转化为小写
@@ -110,20 +114,28 @@ public class VideoPager extends BasePager implements AdapterView.OnItemClickList
                             MediaPlayer mediaPlayer = getVideoMediaPlayer(file);
                             MediaItem mediaItem = new MediaItem();
                             mediaItem.setName(file.getName());
-                            mediaItem.setDuration(mediaPlayer.getDuration());
-                            mediaItem.setSize(file.length());
-                            mediaItem.setData(file.getAbsolutePath());
-                            mMediaItems.add(mediaItem);
-                        } else if (fileName.endsWith(".jpg")) {
-                            MediaItem mediaItem = new MediaItem();
-                            mediaItem.setName(file.getName());
-                            mediaItem.setDuration(0);
-                            mediaItem.setSize(file.length());
-                            mediaItem.setData(file.getAbsolutePath());
-                            mMediaItems.add(mediaItem);
-                            LogUtil.i("vijoz打印JPG：" + fileName);
-                            list.add(file);
+                            if (mediaPlayer != null) {//如果这个文件是mp4文件则加载这个文件到列表中
+                                mediaItem.setDuration(mediaPlayer.getDuration());
+                                mediaItem.setSize(file.length());
+                                mediaItem.setData(file.getAbsolutePath());
+                                mediaItem.setIsVideos(1);
+                                mAllItems.add(mediaItem);
+                                mMediaItems.add(mediaItem);
+                            }
+                        } else if (fileName.endsWith(".jpg") || fileName.endsWith(".bmp") || fileName.endsWith(".png")) {
+                            if (!fileName.contains("._")){
+                                MediaItem mediaItem = new MediaItem();
+                                mediaItem.setName(file.getName());
+                                mediaItem.setDuration(0);
+                                mediaItem.setSize(file.length());
+                                mediaItem.setData(file.getAbsolutePath());
+                                mediaItem.setIsVideos(0);
+                                mAllItems.add(mediaItem);
+                                mPicItems.add(mediaItem);
+                                LogUtil.i("vijoz打印JPG：" + fileName);
+                            }
                         }
+                        list.add(file);
                     }
                 }
                 Message.obtain(mHandler, DATA_LOADING_FINISH).sendToTarget();

@@ -25,9 +25,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cocodecat.vijoz.adplayer.R;
-import com.cocodecat.vijoz.adplayer.base.MyApplication;
 import com.cocodecat.vijoz.adplayer.bean.MediaItem;
 import com.cocodecat.vijoz.adplayer.loader.GlideImageLoader;
+import com.cocodecat.vijoz.adplayer.utils.LogUtil;
 import com.cocodecat.vijoz.adplayer.utils.Utils;
 import com.cocodecat.vijoz.adplayer.view.MyVideoView;
 import com.youth.banner.Banner;
@@ -45,19 +45,23 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
     private Uri mUri;
     private Banner banner;
     private static List jpgList;
+    private static List showList;
 
-    public static void startSystemVideoPlayerActivity(Context context, ArrayList<MediaItem> mediaItems, Uri uri, int position) {
+
+    //用一个数组记录是否是视频的位置 TODO 记录视频位置
+    public static void startSystemVideoPlayerActivity(Context context, ArrayList<MediaItem> allItems, ArrayList<MediaItem> mediaItems, ArrayList<MediaItem> picItems, Uri uri, int position) {
         Intent intent = new Intent(context, SystemVideoPlayerActivity.class);
-        intent.putParcelableArrayListExtra("mediaItems", mediaItems);
+        intent.putParcelableArrayListExtra("mediaItems", allItems);
+        intent.putParcelableArrayListExtra("videoItems", mediaItems);
+        intent.putParcelableArrayListExtra("picItems", picItems);
         intent.putExtra("position", position);
         intent.setData(uri);
         context.startActivity(intent);
     }
 
-    public static void setImageListDatas(List list){
+    public static void setImageListDatas(List list) {
         jpgList = list;
     }
-
 
     private static final int UPDATA_SEEKBAR_AND_TIEM = 0x01;
     private static final int UPDATA_TIME = 0x02;
@@ -66,7 +70,9 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
     private static final int FULLSCREEN_VIDEO_TYPE = 0x05;
     private static final int UPDATA_NET_SPEED = 0x06;
     private MediaItem mMediaItem;
+    private List<MediaItem> mAllItems;
     private List<MediaItem> mMediaItems;
+    private List<MediaItem> mPicItems;
     private MyVideoView mVvContent;
     private TextView mTvVideoName;
     private ImageView mIvBattery;
@@ -132,10 +138,12 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
             mMediaItem.setData(mUri.toString());
             updataMediaInfo(mMediaItem);
         } else {
-            mMediaItems = getIntent().getParcelableArrayListExtra("mediaItems");
-            if (mMediaItems != null && mMediaItems.size() > 0) {
+            mAllItems = getIntent().getParcelableArrayListExtra("mediaItems");
+            mMediaItems = getIntent().getParcelableArrayListExtra("videoItems");
+            mPicItems = getIntent().getParcelableArrayListExtra("picItems");
+            if (mAllItems != null && mAllItems.size() > 0) {
                 mPosition = getIntent().getIntExtra("position", -1);
-                mMediaItem = mMediaItems.get(mPosition);
+                mMediaItem = mAllItems.get(mPosition);
                 updataMediaInfo(mMediaItem);
             }
         }
@@ -186,19 +194,66 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
         mSeekbarVoice.setMax(mMaxVoice);
         mSeekbarVoice.setProgress(mCurrentVoice);
 
-        banner.setVisibility(View.VISIBLE);
-        mVvContent.setVisibility(View.GONE);
-        banner.setImages(jpgList)
-                .setImageLoader(new GlideImageLoader())
-                .start();
-        //设置标识点隐藏
-        banner.setIndicatorHide();
-        //设置图片切换时间
-        banner.setDelayTime(3000);//还需要修改BannerConfig.TIME
 
+        //Dialog创建
+//        SettingDialog settingDialog = new SettingDialog(this);
+//        settingDialog.setCanceledOnTouchOutside(false);
+//        settingDialog.show();
     }
 
-    List list=new ArrayList<>();
+
+    private void playImage(int position) {
+        banner.setVisibility(View.VISIBLE);
+        mVvContent.setVisibility(View.GONE);
+
+        //设置显示的列表
+        showList = new ArrayList();
+        showList = jpgList;
+
+        for (int i = 0; i < jpgList.size(); i++) {
+            if (i < position) {
+                    showList.remove(i);
+            }
+        }
+
+        if (showList.size() > 0) {
+            //设置列表播放图片
+            banner.setImages(showList)
+                    .setImageLoader(new GlideImageLoader())
+                    .start();
+            //设置标识点隐藏
+            banner.setIndicatorHide();
+            banner.isAutoPlay(false);
+        } else {
+            //设置列表播放图片
+            banner.setImages(jpgList)
+                    .setImageLoader(new GlideImageLoader())
+                    .start();
+            //设置标识点隐藏
+            banner.setIndicatorHide();
+            banner.isAutoPlay(false);
+        }
+
+        //设置图片切换时间
+        //banner.setDelayTime(3000);//还需要修改BannerConfig.TIME
+        timesScountDown(3000);
+    }
+
+
+    /**
+     * 执行下一个
+     *
+     * @param times
+     */
+    private void timesScountDown(int times) {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                playNextMedia();
+            }
+        }, times);
+    }
+
 
     /**
      * 设置全屏或者默认
@@ -215,6 +270,7 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
                         height = width * mVideoHeight / mVideoWidth;
                     }
                 }
+
                 mVvContent.setVideoSize(width, height);
                 isFullScreen = false;
                 mBtnSwitchScreenFull.setImageResource(R.drawable.btn_video_siwch_screen_full_selector);
@@ -300,7 +356,6 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
             setBattery(level);
         }
     }
-
 
     private void setBattery(int level) {
         if (level <= 0) {
@@ -391,12 +446,12 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
         mTvCurrentTime = (TextView) findViewById(R.id.tv_current_time);
         mSeekbarVideo = (SeekBar) findViewById(R.id.seekbar_video);
         mTvTotalTime = (TextView) findViewById(R.id.tv_total_time);
-        mBtnExit =  findViewById(R.id.btn_exit);
+        mBtnExit = findViewById(R.id.btn_exit);
         mBtnPre = findViewById(R.id.btn_pre);
-        banner =findViewById(R.id.banner);
-        mBtnStartPause =  findViewById(R.id.btn_start_pause);
+        banner = findViewById(R.id.banner);
+        mBtnStartPause = findViewById(R.id.btn_start_pause);
         mBtnNext = findViewById(R.id.btn_next);
-        mBtnSwitchScreenFull =  findViewById(R.id.btn_switch_screen_full);
+        mBtnSwitchScreenFull = findViewById(R.id.btn_switch_screen_full);
         mRelaMediaController = findViewById(R.id.rela_media_controller);
         mBtnVoice.setOnClickListener(this);
         mBtnExit.setOnClickListener(this);
@@ -517,37 +572,66 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
      * 播放上一个视频
      */
     private void playPreMedia() {
-        if (mMediaItems != null && mMediaItems.size() > 0) {
+        if (mAllItems != null && mAllItems.size() > 0) {
             mPosition--;
             if (mPosition >= 0) {
-                mMediaItem = mMediaItems.get(mPosition);
-                updataMediaInfo(mMediaItem);
-            }else{
-                if(isCirclePlay){//是否循环播放
-                    mPosition = mMediaItems.size()-1;
-                    mMediaItem = mMediaItems.get(mPosition);
+                //播放上一个
+                mMediaItem = mAllItems.get(mPosition);
+                if (mMediaItem.getIsVideos() == 1) {
                     updataMediaInfo(mMediaItem);
+                } else {
+                    playPreMedia();
+                }
+            } else {
+                //播放到第一个了去播放最后一个
+                if (isCirclePlay) {//是否循环播放
+                    mPosition = mAllItems.size() - 1;
+                    mMediaItem = mAllItems.get(mPosition);
+                    if (mMediaItem.getIsVideos() == 1) {
+                        updataMediaInfo(mMediaItem);
+                    } else {
+                        playPreMedia();
+                    }
                 }
             }
         }
     }
 
     private boolean isCirclePlay = true;
+    private int mPicPosition=0;
+    private int mediaCount = 0;
 
     /**
      * 播放下一个视频
      */
     private void playNextMedia() {
-        if (mMediaItems != null && mMediaItems.size() > 0) {
+        if (mAllItems != null && mAllItems.size() > 0) {
             mPosition++;
-            if (mPosition < mMediaItems.size()) {
-                mMediaItem = mMediaItems.get(mPosition);
-                updataMediaInfo(mMediaItem);
-            } else {
+            if (mPosition < mAllItems.size()) {//播放下一个
+                mMediaItem = mAllItems.get(mPosition);
+                LogUtil.i("vijoz打印Position的值：" + mPosition + "-mMediaItem.isVideo():" + mMediaItem.getIsVideos());
+                if (mMediaItem.getIsVideos() == 1) {//如果是视频
+                    mediaCount++;
+                    mVvContent.setVisibility(View.VISIBLE);
+                    banner.setVisibility(View.GONE);
+                    updataMediaInfo(mMediaItem);
+                } else {//如果是图片
+                    mPicPosition = mPosition - mediaCount;
+                    playImage(mPicPosition);
+                }
+            } else {//播放到最后一个了去播放第一个
                 if (isCirclePlay) {//是否循环播放
                     mPosition = 0;
-                    mMediaItem = mMediaItems.get(mPosition);
-                    updataMediaInfo(mMediaItem);
+                    mMediaItem = mAllItems.get(mPosition);
+                    if (mMediaItem.getIsVideos() == 1) {//如果是视频
+                        mediaCount=0;
+                        banner.setVisibility(View.GONE);
+                        mVvContent.setVisibility(View.VISIBLE);
+                        updataMediaInfo(mMediaItem);
+                    } else {//如果是图片
+                        mPicPosition = mPosition - mediaCount;
+                        playImage(mPicPosition);
+                    }
                 } else {//不循环播放
                     finish();
                 }
@@ -566,26 +650,26 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
         setBtnPreAndNextEnable();
     }
 
-
     /**
      * 设置播放的上下按钮是否可以点击
      */
     private void setBtnPreAndNextEnable() {
         mBtnPre.setEnabled(true);
         mBtnNext.setEnabled(true);
-        if (mMediaItems != null && mMediaItems.size() > 1) {
-            if(isCirclePlay){//是否可以循环播放
-            }else{
+        if (mAllItems != null && mAllItems.size() > 1) {
+            if (isCirclePlay) {//是否可以循环播放
+            } else {
                 if (mPosition == 0) {
                     //当前位置属于第一个，那上一个置灰
                     mBtnPre.setEnabled(false);
-                } else if (mPosition == mMediaItems.size() - 1) {
+                } else if (mPosition == mAllItems.size() - 1) {
                     //当前位置属于最后一个，那下一个置灰
                     mBtnNext.setEnabled(false);
-                }/*else{
+                }
+                /*else{
                 mBtnPre.setEnabled(true);
                 mBtnNext.setEnabled(true);
-            }*/
+                }*/
             }
         } else {
             //列表是空的或者长度只有一个的情况

@@ -20,6 +20,8 @@ public class MediaItem implements Parcelable {
 
     private String imageUrl;
 
+    private int isVideos;
+
     public String getDesc() {
         return desc;
     }
@@ -76,7 +78,13 @@ public class MediaItem implements Parcelable {
         this.artist = artist;
     }
 
+    public int getIsVideos() {
+        return isVideos;
+    }
 
+    public void setIsVideos(int isVideos) {
+        this.isVideos = isVideos;
+    }
 
     @Override
     public String toString() {
@@ -105,10 +113,10 @@ public class MediaItem implements Parcelable {
         dest.writeString(this.artist);
         dest.writeString(this.desc);
         dest.writeString(this.imageUrl);
+        dest.writeInt(this.isVideos);
     }
 
-    public MediaItem() {
-    }
+    public MediaItem() {}
 
     protected MediaItem(Parcel in) {
         this.name = in.readString();
@@ -118,6 +126,7 @@ public class MediaItem implements Parcelable {
         this.artist = in.readString();
         this.desc = in.readString();
         this.imageUrl = in.readString();
+        this.isVideos = in.readInt();
     }
 
     public static final Creator<MediaItem> CREATOR = new Creator<MediaItem>() {

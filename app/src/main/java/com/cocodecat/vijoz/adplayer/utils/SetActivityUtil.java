@@ -5,7 +5,6 @@ import android.view.Window;
 import android.view.WindowManager;
 
 public class SetActivityUtil {
-
     private static final Object LockThis = new Object();
     private static SetActivityUtil setActivityUtil;
 
@@ -30,9 +29,5 @@ public class SetActivityUtil {
         activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
-
-    public void setting(){
-
-    }
-
+    public void setting(){}
 }

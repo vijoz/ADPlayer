@@ -264,7 +264,7 @@ public class Banner extends FrameLayout implements OnPageChangeListener {
         start();
     }
 
-    public void setIndicatorHide(){
+    public void setIndicatorHide() {
         indicator.setVisibility(GONE);
     }
 
@@ -299,7 +299,7 @@ public class Banner extends FrameLayout implements OnPageChangeListener {
     }
 
     private void setBannerStyleUI() {
-        int visibility =count > 1 ? View.VISIBLE :View.GONE;
+        int visibility = count > 1 ? View.VISIBLE : View.GONE;
         switch (bannerStyle) {
             case BannerConfig.CIRCLE_INDICATOR:
                 indicator.setVisibility(visibility);
@@ -364,8 +364,8 @@ public class Banner extends FrameLayout implements OnPageChangeListener {
             if (imageLoader != null)
                 imageLoader.displayImage(context, url, imageView);
             else
-        Log.e(tag, "Please set images loader.");
-    }
+                Log.e(tag, "Please set images loader.");
+        }
     }
 
     private void setScaleType(View imageView) {
@@ -448,8 +448,8 @@ public class Banner extends FrameLayout implements OnPageChangeListener {
 
 
     public void startAutoPlay() {
-        handler.removeCallbacks(task);
-        handler.postDelayed(task, delayTime);
+//        handler.removeCallbacks(task);
+//        handler.postDelayed(task, delayTime);
     }
 
     public void stopAutoPlay() {
@@ -580,36 +580,40 @@ public class Banner extends FrameLayout implements OnPageChangeListener {
 
     @Override
     public void onPageSelected(int position) {
-        currentItem=position;
+        currentItem = position;
         if (mOnPageChangeListener != null) {
             mOnPageChangeListener.onPageSelected(toRealPosition(position));
         }
-        if (bannerStyle == BannerConfig.CIRCLE_INDICATOR ||
-                bannerStyle == BannerConfig.CIRCLE_INDICATOR_TITLE ||
-                bannerStyle == BannerConfig.CIRCLE_INDICATOR_TITLE_INSIDE) {
-            indicatorImages.get((lastPosition - 1 + count) % count).setImageResource(mIndicatorUnselectedResId);
-            indicatorImages.get((position - 1 + count) % count).setImageResource(mIndicatorSelectedResId);
-            lastPosition = position;
+
+        if (lastPosition - 1 + count > 0) {
+            if (bannerStyle == BannerConfig.CIRCLE_INDICATOR ||
+                    bannerStyle == BannerConfig.CIRCLE_INDICATOR_TITLE ||
+                    bannerStyle == BannerConfig.CIRCLE_INDICATOR_TITLE_INSIDE) {
+                indicatorImages.get((lastPosition - 1 + count) % count).setImageResource(mIndicatorUnselectedResId);
+                indicatorImages.get((position - 1 + count) % count).setImageResource(mIndicatorSelectedResId);
+                lastPosition = position;
+            }
+            if (position == 0) position = count;
+            if (position > count) position = 1;
+            switch (bannerStyle) {
+                case BannerConfig.CIRCLE_INDICATOR:
+                    break;
+                case BannerConfig.NUM_INDICATOR:
+                    numIndicator.setText(position + "/" + count);
+                    break;
+                case BannerConfig.NUM_INDICATOR_TITLE:
+                    numIndicatorInside.setText(position + "/" + count);
+                    bannerTitle.setText(titles.get(position - 1));
+                    break;
+                case BannerConfig.CIRCLE_INDICATOR_TITLE:
+                    bannerTitle.setText(titles.get(position - 1));
+                    break;
+                case BannerConfig.CIRCLE_INDICATOR_TITLE_INSIDE:
+                    bannerTitle.setText(titles.get(position - 1));
+                    break;
+            }
         }
-        if (position == 0) position = count;
-        if (position > count) position = 1;
-        switch (bannerStyle) {
-            case BannerConfig.CIRCLE_INDICATOR:
-                break;
-            case BannerConfig.NUM_INDICATOR:
-                numIndicator.setText(position + "/" + count);
-                break;
-            case BannerConfig.NUM_INDICATOR_TITLE:
-                numIndicatorInside.setText(position + "/" + count);
-                bannerTitle.setText(titles.get(position - 1));
-                break;
-            case BannerConfig.CIRCLE_INDICATOR_TITLE:
-                bannerTitle.setText(titles.get(position - 1));
-                break;
-            case BannerConfig.CIRCLE_INDICATOR_TITLE_INSIDE:
-                bannerTitle.setText(titles.get(position - 1));
-                break;
-        }
+
 
     }
 

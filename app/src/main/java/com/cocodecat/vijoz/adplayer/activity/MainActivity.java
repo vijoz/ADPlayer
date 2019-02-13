@@ -3,7 +3,6 @@ package com.cocodecat.vijoz.adplayer.activity;
 import android.Manifest;
 import android.app.Activity;
 import android.content.res.Configuration;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -12,7 +11,6 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.FrameLayout;
 import android.widget.RadioGroup;
-import android.widget.Toast;
 
 import com.cocodecat.vijoz.adplayer.Fragment.BaseFragment;
 import com.cocodecat.vijoz.adplayer.R;
@@ -46,7 +44,6 @@ public class MainActivity extends FragmentActivity implements EasyPermissions.Pe
         mBasePagers.add(new VideoPager(this));
         rg_bottom_tab.setOnCheckedChangeListener(new MyCheckedChangeListener());
         EasyPermissions.requestPermissions(mContext,"允许读取手机文件",0, Manifest.permission.READ_EXTERNAL_STORAGE);
-
     }
 
     @Override
@@ -69,11 +66,9 @@ public class MainActivity extends FragmentActivity implements EasyPermissions.Pe
                     position=0;
                     break;
             }
-
             setFragment();
         }
     }
-
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -105,7 +100,6 @@ public class MainActivity extends FragmentActivity implements EasyPermissions.Pe
     /**
      * 是否已经退出
      */
-    private boolean isExit = false;
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if(keyCode ==KeyEvent.KEYCODE_BACK){
@@ -113,15 +107,7 @@ public class MainActivity extends FragmentActivity implements EasyPermissions.Pe
                 position = 0;
                 rg_bottom_tab.check(R.id.rb_video);//首页
                 return true;
-            }else  if(!isExit){
-                isExit = true;
-                Toast.makeText(MainActivity.this,"再按一次推出",Toast.LENGTH_SHORT).show();
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        isExit  = false;
-                    }
-                },2000);
+            }else{
                 return true;
             }
         }

@@ -16,7 +16,6 @@ import com.cocodecat.vijoz.adplayer.utils.Utils;
 import java.util.List;
 
 public class VideoAdapter extends BaseAdapter {
-
     private Context mContext;
     private List<MediaItem> mMediaItems;
     private Utils mUtils;
