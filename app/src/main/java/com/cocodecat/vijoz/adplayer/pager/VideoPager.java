@@ -51,14 +51,22 @@ public class VideoPager extends BasePager implements AdapterView.OnItemClickList
                     }
                     mPbLoading.setVisibility(View.GONE);
 
-//                  //从第0个开始播放视频
-                    //SystemVideoPlayerActivity.startSystemVideoPlayerActivity(mContext, (ArrayList<MediaItem>) mAllItems, null,0);
 
                     SystemVideoPlayerActivity.setImageListDatas(list);
                     break;
             }
         }
     };
+
+
+    /**
+     * 开始播放
+     */
+    public void startPlay(){
+        //从第0个开始播放视频
+        SystemVideoPlayerActivity.startSystemVideoPlayerActivity(mContext, (ArrayList<MediaItem>) mAllItems,(ArrayList<MediaItem>) mMediaItems,(ArrayList<MediaItem>) mPicItems, null,0);
+
+    }
 
     public VideoPager(MainActivity context) {
         super(context);

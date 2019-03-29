@@ -25,7 +25,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cocodecat.vijoz.adplayer.R;
+import com.cocodecat.vijoz.adplayer.base.MyApplication;
 import com.cocodecat.vijoz.adplayer.bean.MediaItem;
+import com.cocodecat.vijoz.adplayer.dialog.SettingDialog;
 import com.cocodecat.vijoz.adplayer.loader.GlideImageLoader;
 import com.cocodecat.vijoz.adplayer.utils.LogUtil;
 import com.cocodecat.vijoz.adplayer.utils.Utils;
@@ -59,6 +61,7 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
         context.startActivity(intent);
     }
 
+    //设置图片的数据
     public static void setImageListDatas(List list) {
         jpgList = list;
     }
@@ -196,25 +199,19 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
 
 
         //Dialog创建
-//        SettingDialog settingDialog = new SettingDialog(this);
-//        settingDialog.setCanceledOnTouchOutside(false);
-//        settingDialog.show();
+        SettingDialog settingDialog = new SettingDialog(this);
+        settingDialog.setCanceledOnTouchOutside(false);
+        settingDialog.setCancelable(false);
+        settingDialog.show();
     }
 
 
     private void playImage(int position) {
         banner.setVisibility(View.VISIBLE);
         mVvContent.setVisibility(View.GONE);
-
         //设置显示的列表
         showList = new ArrayList();
-        showList = jpgList;
-
-        for (int i = 0; i < jpgList.size(); i++) {
-            if (i < position) {
-                    showList.remove(i);
-            }
-        }
+        showList.add(jpgList.get(position));
 
         if (showList.size() > 0) {
             //设置列表播放图片
@@ -224,19 +221,10 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
             //设置标识点隐藏
             banner.setIndicatorHide();
             banner.isAutoPlay(false);
-        } else {
-            //设置列表播放图片
-            banner.setImages(jpgList)
-                    .setImageLoader(new GlideImageLoader())
-                    .start();
-            //设置标识点隐藏
-            banner.setIndicatorHide();
-            banner.isAutoPlay(false);
         }
 
         //设置图片切换时间
-        //banner.setDelayTime(3000);//还需要修改BannerConfig.TIME
-        timesScountDown(3000);
+        timesScountDown(MyApplication.getInstance().picTime * 1000); //3秒钟切换图片
     }
 
 
@@ -598,7 +586,7 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
     }
 
     private boolean isCirclePlay = true;
-    private int mPicPosition=0;
+    private int mPicPosition = 0;
     private int mediaCount = 0;
 
     /**
@@ -615,8 +603,10 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
                     mVvContent.setVisibility(View.VISIBLE);
                     banner.setVisibility(View.GONE);
                     updataMediaInfo(mMediaItem);
+                    LogUtil.i("vijoz打印视频的Position值：" + mediaCount);
                 } else {//如果是图片
-                    mPicPosition = mPosition - mediaCount;
+                    mPicPosition = mPosition - mediaCount - 1;
+                    LogUtil.i("vijoz打印图片的Position值：" + mPicPosition);
                     playImage(mPicPosition);
                 }
             } else {//播放到最后一个了去播放第一个
@@ -624,12 +614,14 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
                     mPosition = 0;
                     mMediaItem = mAllItems.get(mPosition);
                     if (mMediaItem.getIsVideos() == 1) {//如果是视频
-                        mediaCount=0;
+                        mediaCount = 0;
                         banner.setVisibility(View.GONE);
                         mVvContent.setVisibility(View.VISIBLE);
                         updataMediaInfo(mMediaItem);
+                        LogUtil.i("vijoz打印视频的Position值：-最后一个-" + mediaCount);
                     } else {//如果是图片
-                        mPicPosition = mPosition - mediaCount;
+                        mPicPosition = 0;
+                        LogUtil.i("vijoz打印图片的Position值：-最后一个-" + mPicPosition);
                         playImage(mPicPosition);
                     }
                 } else {//不循环播放
@@ -642,10 +634,24 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
     }
 
     private void updataMediaInfo(MediaItem mediaItem) {
-        if (mediaItem != null) {
-            mTvVideoName.setText(mediaItem.getName());
-            mVvContent.setVideoURI(Uri.parse(mediaItem.getData()));
-            mHandler.sendEmptyMessage(UPDATA_NET_SPEED);
+        if (mediaItem.getIsVideos() == 1) {//是视频
+            LogUtil.i("vijoz打印视频还是图片的判断：是");
+            if (mediaItem != null) {
+                mTvVideoName.setText(mediaItem.getName());
+                mVvContent.setVideoURI(Uri.parse(mediaItem.getData()));
+                mHandler.sendEmptyMessage(UPDATA_NET_SPEED);
+            }
+        } else {//是图片
+            LogUtil.i("vijoz打印视频还是图片的判断：否");
+            //确定图片的position
+            int videoCount = 0;
+            for (int i = 0; i < mPosition; i++) {
+                if (mAllItems.get(i).getIsVideos() == 1) {
+                    videoCount++;
+                }
+            }
+            //播放图片
+            playImage(mPosition - videoCount);
         }
         setBtnPreAndNextEnable();
     }
@@ -714,7 +720,6 @@ public class SystemVideoPlayerActivity extends Activity implements MediaPlayer.O
         }
         mHandler.removeCallbacksAndMessages(null);
     }
-
 
     private class VoiceSeekBarListener implements SeekBar.OnSeekBarChangeListener {
         @Override

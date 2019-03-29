@@ -34,4 +34,8 @@ dependencies {
         // if you don't use android.app.Fragment you can exclude support for them
         exclude module: "support-v4"
     }
+
+    implementation('com.github.GrenderG:Toasty:1.2.8') {
+        exclude group: 'com.android.support'
+    }
 }

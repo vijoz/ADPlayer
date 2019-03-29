@@ -23,6 +23,9 @@ public class MyApplication extends Application {
     private Context mContext;
     public static int H,W;
 
+
+    public static int picTime = 10;//默认为10秒
+
     public synchronized static MyApplication getInstance() {
         if (null == myApplication) {
             synchronized (LockThis) {

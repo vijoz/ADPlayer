@@ -26,6 +26,7 @@
             android:name=".activity.SystemVideoPlayerActivity"
             android:configChanges="keyboardHidden|screenSize|orientation"
             android:launchMode="singleTask"
+            android:screenOrientation="sensorLandscape"
             android:theme="@style/fullWindows_Theme">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
